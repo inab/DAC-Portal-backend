@@ -1,0 +1,9 @@
+[submodule "ipc-test-data"]
+	path = ipc-test-data
+	url = https://github.com/acavalls/ipc-test-data.git
+[submodule "ipc-plugins"]
+	path = ipc-plugins
+	url = https://github.com/acavalls/ipc-plugins.git
+[submodule "Permissions-API"]
+	path = Permissions-API
+	url = https://github.com/inab/Permissions-API.git

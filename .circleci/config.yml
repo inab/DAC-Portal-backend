@@ -1,0 +1,88 @@
+version: 2.1
+
+workflows:
+  test-and-publish-dac-portal-backend:
+    jobs:
+      - run-tests:
+          name: test-dac-backend
+      - hold:
+          type: approval
+          requires:
+            - test-dac-backend
+      - publish:
+          requires:
+            - test-dac-backend
+            - hold
+          filters:
+            branches:
+              only: master
+jobs:
+  run-tests:
+    machine:
+      image: ubuntu-2004:202010-01
+    resource_class: medium
+    steps:
+      - checkout
+      - run:
+          name: install dockerize
+          command: wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && sudo tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+          environment:
+            DOCKERIZE_VERSION: v0.3.0
+      - run:
+          name: increase file watchers limit
+          command: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+      - run:
+          name: Pull test data and plugins submodules
+          command: |
+            git submodule init
+            git submodule update
+      - run:
+          name: Start DAC-Portal backend
+          command: |
+            docker-compose -f docker-compose.tests.yml up -d dac-portal-backend
+            docker-compose -f docker-compose.tests.yml logs
+      - run:
+          name: Start MONGO
+          command: |
+            sudo chmod 400 keyfile
+            sudo chown 999:999 keyfile
+            docker-compose -f docker-compose.tests.yml up -d mongo
+            docker-compose -f docker-compose.tests.yml logs
+      - run:
+          name: Wait for mongodb
+          command: |
+            docker-compose -f docker-compose.tests.yml logs mongo
+            dockerize -wait tcp://172.21.0.1:27017 -timeout 5m
+      - run:
+          name: Start RabbitMQ
+          command: |
+            docker-compose -f docker-compose.tests.yml up -d rabbitmq
+      - run:
+          name: Start Permissions-API
+          command: |
+            docker-compose -f docker-compose.tests.yml up -d permissions-api
+            docker-compose -f docker-compose.tests.yml logs
+      - run:
+          name: Run unit (Jest) and integration/e2e tests
+          command: | 
+            docker-compose -f docker-compose.tests.yml logs
+            docker-compose -f docker-compose.tests.yml exec dac-portal-backend npm run test
+            docker-compose -f docker-compose.tests.yml exec dac-portal-backend npm run test:e2e
+  publish:
+    docker:
+      - image: cimg/node:16.4.1
+        auth:
+          username: $DOCKER_USER
+          password: $DOCKER_PASS
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 19.03.13
+          docker_layer_caching: false
+      - run: 
+          command: | 
+            TAG=0.1.${CIRCLE_BUILD_NUM} 
+            docker build -f Dockerfile.production -t acavalls/ipc-dac-portal-backend:$TAG -t acavalls/ipc-dac-portal-backend:latest .
+            echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+            docker push acavalls/ipc-dac-portal-backend:$TAG
+            docker push acavalls/ipc-dac-portal-backend:latest

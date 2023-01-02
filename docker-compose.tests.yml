@@ -1,0 +1,66 @@
+version: '3'
+
+services:
+  dac-portal-backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "9090:9090"
+    env_file:
+      - .env
+    depends_on:
+      - mongo
+    networks:
+      dac-network:
+        ipv4_address: 172.21.0.23
+  permissions-api:
+    image: acavalls/ipc-permissions-api:latest
+    container_name: permissions-api-test
+    ports:
+      - 8081:8081
+    env_file:
+      - .env-permissions
+    depends_on:
+      - mongo
+    networks:
+      dac-network:
+        ipv4_address: 172.21.0.11
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: 'rabbitmq'
+    ports:
+      - 5672:5672
+      - 15672:15672
+    healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:15672"]
+        interval: 30s
+        timeout: 10s
+        retries: 5
+    networks:
+      dac-network:
+        ipv4_address: 172.21.0.24
+  mongo:
+    image: mongo:4.4
+    hostname: mongo
+    restart: always
+    volumes:
+      - "./ipc-test-data/mdbdata:/data/db"
+      - "./keyfile:/opt/keyfile/keyfile"
+    ports:
+      - 27017:27017
+    environment:
+      PUID: 1000
+      PGID: 1000
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_REPLICA_SET_NAME: rs0
+    command: "--bind_ip_all --keyFile /opt/keyfile/keyfile --replSet rs0"
+    networks:
+      dac-network:
+        ipv4_address: 172.21.0.10
+networks:
+  dac-network:
+    ipam:
+      config:
+        - subnet: 172.21.0.0/24
