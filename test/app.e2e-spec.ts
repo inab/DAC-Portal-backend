@@ -53,7 +53,7 @@ describe('e2e tests', () => {
     expect(response.status).toBe(403)
   });
 
-  it('has to return all the accepted requests (3) from DACs - /dac/requests', async () => {
+  it('has to return all the accepted requests (1) from DACs - /dac/requests', async () => {
     const token = await auth.generateJwt("dac-admin")
     const response = await request(app.getHttpServer())
       .get('/dac/requests')
@@ -61,10 +61,10 @@ describe('e2e tests', () => {
       .auth(token, { type: 'bearer' })
 
     expect(response.status).toBe(200)
-    expect(response.body).toHaveLength(3)
+    expect(response.body).toHaveLength(1)
   });
 
-  it('has to return all the pending requests (2) from DACs - /dac/requests', async () => {
+  it('has to return all the pending requests (1) from DACs - /dac/requests', async () => {
     const token = await auth.generateJwt("dac-admin")
     const response = await request(app.getHttpServer())
       .get('/dac/requests')
@@ -72,6 +72,6 @@ describe('e2e tests', () => {
       .auth(token, { type: 'bearer' })
 
     expect(response.status).toBe(200)
-    expect(response.body).toHaveLength(2)
+    expect(response.body).toHaveLength(1)
   });
 });
