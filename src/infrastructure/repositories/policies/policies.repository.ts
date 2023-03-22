@@ -60,6 +60,10 @@ export class PoliciesRepository implements IPoliciesRepository {
     return await this.policyModel.find({ '_id': id })
   }
 
+  async getPolicyByFile(id: string): Promise<any> {
+    return await this.policyModel.find({ 'fileId': id })
+  }
+
   async getAllPolicies(userId: string): Promise<any> {
     const dacs = await this.getUserDacs(userId);
     const response = await this.dacModel.aggregate(this.queryByDacs(dacs))
@@ -68,6 +72,10 @@ export class PoliciesRepository implements IPoliciesRepository {
 
   async findPolicyById(id: string): Promise<any> {
     return await this.getPolicy(id);
+  }
+
+  async findPolicyByFileId(id: string): Promise<any> {
+    return await this.getPolicyByFile(id);
   }
 
   async updatePolicyById(id: string, value: string): Promise<any> {

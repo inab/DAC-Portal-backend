@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { GetDACInfo } from '../../application/info/GetDACInfo';
 import { UpdateDACInfo } from '../../application/info/UpdateDACInfo';
 import { FindPolicyById } from '../../application/policies/FindPolicyById';
+import { FindPolicyByFileId } from '../../application/policies/FindPolicyByFileId';
 import { GetAllPolicies } from '../../application/policies/GetAllPolicies';
 import { UpdatePolicyById } from '../../application/policies/UpdatePolicyById';
 import { RejectAccessRequest } from '../../application/requests/RejectAccessRequest';
@@ -38,6 +39,7 @@ import { KCAuthModule } from '../helpers/auth/keycloak.module';
     GetDACInfo,
     UpdateDACInfo,
     FindPolicyById,
+    FindPolicyByFileId,
     UpdatePolicyById,
     GetAllPolicies,
     RejectAccessRequest,
